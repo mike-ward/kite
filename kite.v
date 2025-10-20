@@ -22,6 +22,12 @@ fn main() {
 		app.error_msg = err.msg()
 		BSkySession{}
 	}
+	if is_valid_session(app.session) {
+		refresh_session(mut app) or {
+			eprintln(err.msg())
+			exit(1)
+		}
+	}
 	mut window := gui.window(
 		state:   app
 		title:   'Kite'
@@ -29,12 +35,11 @@ fn main() {
 		height:  app_height
 		on_init: fn (mut w gui.Window) {
 			mut app := kite_app(w)
-			valid := is_valid_session(app.session)
-			view := if valid { timeline_view } else { login_view }
-			if valid {
-				app.timeline_loop()
+			if is_valid_session(app.session) {
+				spawn app.timeline_loop(mut w)
+			} else {
+				w.update_view(login_view)
 			}
-			w.update_view(view)
 		}
 	)
 	window.set_theme(create_system_font_theme())

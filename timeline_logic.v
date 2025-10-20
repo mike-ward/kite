@@ -3,6 +3,7 @@ import os
 import math
 import stbi
 import net.http
+import gui
 
 const kite_dir = 'kite'
 const image_tmp_dir = os.join_path(os.temp_dir(), kite_dir)
@@ -36,14 +37,18 @@ pub:
 	quote_post_link_uri   string
 }
 
-fn (mut app KiteApp) timeline_loop() {
+fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
+	w.update_view(timeline_view)
 	for {
 		bluesky_timeline := get_timeline(app.session) or { continue }
 		get_timeline_images(bluesky_timeline)
-		app.timeline = from_bluesky_timeline(bluesky_timeline, max_timeline_posts)
-		// app.prune_picture_cache(timeline.posts)
-		// time.sleep(time.minute)
-		break
+		tl := from_bluesky_timeline(bluesky_timeline, max_timeline_posts)
+		w.@lock()
+		app.timeline = tl
+		w.unlock()
+		prune_disk_image_cache()
+		w.update_window()
+		time.sleep(time.minute)
 	}
 }
 

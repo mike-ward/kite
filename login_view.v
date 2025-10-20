@@ -43,17 +43,7 @@ fn login_view(window &gui.Window) gui.View {
 				content:  [gui.text(text: 'Submit')]
 				on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := kite_app(w)
-					if session := create_session(app.user_name, app.password) {
-						save_session(session, mut w)
-						app.session = load_session() or {
-							app.error_msg = err.msg()
-							return
-						}
-						app.error_msg = ''
-						w.update_view(timeline_view)
-					} else {
-						app.error_msg = err.msg()
-					}
+					login(mut app, mut w)
 				}
 			),
 			gui.text(
