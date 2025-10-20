@@ -25,14 +25,19 @@ fn timeline_view(window &gui.Window) gui.View {
 			if post_author.is_blank() || post_text.is_blank() {
 				continue
 			}
+			time_short := post.created_at
+				.utc_to_local()
+				.relative_short()
+				.fields()[0]
+			timestamp := if time_short == '0m' { 'now' } else { time_short }
+			author_timestamp := truncate_long_fields('${post_author} • ${timestamp}')
+
 			content << gui.column(
 				padding: gui.padding_none
 				sizing:  gui.fill_fit
 				spacing: 1
 				content: [
-					gui.text(
-						text: post_author
-					),
+					gui.text(text: author_timestamp),
 					gui.text(
 						text:       post_text
 						mode:       .wrap

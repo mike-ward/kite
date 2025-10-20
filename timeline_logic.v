@@ -39,13 +39,19 @@ pub:
 
 fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 	w.update_view(timeline_view)
+
 	for {
-		bluesky_timeline := get_timeline(app.session) or { continue }
+		bluesky_timeline := get_timeline(app.session) or {
+			eprintln(err.msg())
+			continue
+		}
 		get_timeline_images(bluesky_timeline)
-		tl := from_bluesky_timeline(bluesky_timeline, max_timeline_posts)
+		timeline := from_bluesky_timeline(bluesky_timeline, max_timeline_posts)
+
 		w.@lock()
-		app.timeline = tl
+		app.timeline = timeline
 		w.unlock()
+
 		prune_disk_image_cache()
 		w.update_window()
 		time.sleep(time.minute)
