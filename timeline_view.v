@@ -1,9 +1,21 @@
 import gui
+import os
 
+const thin_space = '\xE2\x80\x89'
+const link_color = gui.cornflower_blue
 const post_text_color = gui.rgb(160, 160, 160)
 const post_text_style = gui.TextStyle{
 	...gui.theme().text_style
 	color: post_text_color
+}
+const post_link_style = gui.TextStyle{
+	...gui.theme().text_style
+	color: link_color
+}
+const post_repost_style = gui.TextStyle{
+	...gui.theme().text_style
+	color: post_text_color
+	size:  gui.theme().size_text_small + 1
 }
 
 fn timeline_view(window &gui.Window) gui.View {
@@ -31,28 +43,74 @@ fn timeline_view(window &gui.Window) gui.View {
 				.fields()[0]
 			timestamp := if time_short == '0m' { 'now' } else { time_short }
 			author_timestamp := truncate_long_fields('${post_author} • ${timestamp}')
+			mut post_content := []gui.View{cap: 6}
 
+			if !post.repost_by.is_blank() {
+				post_content << gui.text(
+					text:       truncate_long_fields('•${thin_space}reposted by ${remove_non_ascii(post.repost_by)}')
+					text_style: post_repost_style
+				)
+			}
+			post_content << gui.text(text: author_timestamp)
+			post_content << gui.text(
+				text:       post_text
+				mode:       .wrap
+				text_style: post_text_style
+			)
+			if !post.link_uri.is_blank() {
+				post_content << gui.column(
+					padding:  gui.Padding{
+						top: gui.pad_small
+					}
+					sizing:   gui.fill_fit
+					on_click: fn [post] (_ voidptr, mut e gui.Event, mut _ gui.Window) {
+						e.is_handled = true
+						os.open_uri(post.link_uri) or { eprintln('${@FILE_LINE} > ${err.msg()}') }
+					}
+					on_hover: fn (mut _ gui.Layout, mut e gui.Event, mut w gui.Window) {
+						w.set_mouse_cursor_pointing_hand()
+						e.is_handled = true
+					}
+					content:  [
+						gui.text(
+							text:       sanitize_text(post.link_title)
+							mode:       .wrap
+							text_style: post_link_style
+						),
+					]
+				)
+			}
+			if !post.image_path.is_blank() {
+				post_content << gui.column(
+					h_align: .center
+					sizing:  gui.fill_fit
+					content: [
+						gui.image(
+							file_name:  post.image_path
+							width:      image_width
+							max_height: max_image_height
+							on_click:   fn [post] (_ &gui.ImageCfg, mut e gui.Event, mut _ gui.Window) {
+								e.is_handled = true
+								os.open_uri(post.bsky_link_uri) or {
+									eprintln('${@FILE_LINE} > ${err.msg()}')
+								}
+							}
+						),
+					]
+				)
+			}
+			post_content << gui.rectangle(height: gui.pad_small) // spacer
+			post_content << gui.rectangle(
+				height: 0.4
+				width:  w - gui.pad_large - gui.pad_medium
+				sizing: gui.fixed_fixed
+				color:  post_text_color
+			)
 			content << gui.column(
 				padding: gui.padding_none
 				sizing:  gui.fill_fit
 				spacing: 1
-				content: [
-					gui.text(text: author_timestamp),
-					gui.text(
-						text:       post_text
-						mode:       .wrap
-						text_style: post_text_style
-					),
-					// spacer
-					gui.rectangle(height: gui.pad_small),
-					// horizontal line
-					gui.rectangle(
-						height: 0.4
-						width:  w - gui.pad_large - gui.pad_medium
-						sizing: gui.fixed_fixed
-						color:  post_text_color
-					),
-				]
+				content: post_content
 			)
 		}
 	}

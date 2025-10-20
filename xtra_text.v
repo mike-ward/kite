@@ -10,7 +10,7 @@ fn truncate_long_fields(s string) string {
 	})
 }
 
-pub fn remove_non_ascii(s string) string {
+fn remove_non_ascii(s string) string {
 	s1 := arrays.join_to_string[string](s.fields(), ' ', fn (elem string) string {
 		// These characters don't work with v-ui for now
 		return elem

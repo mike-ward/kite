@@ -42,7 +42,7 @@ fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 
 	for {
 		bluesky_timeline := get_timeline(app.session) or {
-			eprintln(err.msg())
+			eprintln('${@FILE_LINE} > ${err.msg()}')
 			continue
 		}
 		get_timeline_images(bluesky_timeline)
@@ -199,7 +199,7 @@ fn post_image(post BSkyPost) (string, string) {
 // Instead of direct links, an identitier (cid) is specified.
 // The api also requires the authors identifier (did)
 fn get_timeline_images(timeline BSkyTimeline) {
-	os.mkdir_all(image_tmp_dir) or { eprintln(err) }
+	os.mkdir_all(image_tmp_dir) or { eprintln('${@FILE_LINE} > ${err.msg()}') }
 
 	// There are several places wehre images are buried.
 	// Similar and yet different enough to make for messy code.
@@ -211,11 +211,11 @@ fn get_timeline_images(timeline BSkyTimeline) {
 					image_tmp_file := image_tmp_file_path(cid)
 					if !os.exists(image_tmp_file) {
 						blob := get_blob(post.post.author.did, cid) or {
-							eprintln(err)
+							eprintln('${@FILE_LINE} > ${err.msg()}')
 							continue
 						}
 						save_image(image_tmp_file, blob) or {
-							eprintln(err)
+							eprintln('${@FILE_LINE} > ${err.msg()}')
 							continue
 						}
 					}
@@ -228,11 +228,11 @@ fn get_timeline_images(timeline BSkyTimeline) {
 					image_tmp_file := image_tmp_file_path(cid)
 					if !os.exists(image_tmp_file) {
 						blob := get_blob(post.post.author.did, cid) or {
-							eprintln(err)
+							eprintln('${@FILE_LINE} > ${err.msg()}')
 							continue
 						}
 						save_image(image_tmp_file, blob) or {
-							eprintln(err)
+							eprintln('${@FILE_LINE} > ${err.msg()}')
 							continue
 						}
 					}
@@ -243,15 +243,15 @@ fn get_timeline_images(timeline BSkyTimeline) {
 			image_tmp_file := image_tmp_file_path(cid)
 			if !os.exists(image_tmp_file) {
 				response := http.get(post.post.embed.thumbnail) or {
-					eprintln(err.msg())
+					eprintln('${@FILE_LINE} > ${err.msg()}')
 					continue
 				}
 				if response.status() != .ok {
-					eprintln(response.status())
+					eprintln('${@FILE_LINE} > ${response.status}')
 					continue
 				}
 				save_image(image_tmp_file, response.body) or {
-					eprintln(err)
+					eprintln('${@FILE_LINE} > ${err.msg()}')
 					continue
 				}
 			}
@@ -262,11 +262,11 @@ fn get_timeline_images(timeline BSkyTimeline) {
 					image_tmp_file := image_tmp_file_path(cid)
 					if !os.exists(image_tmp_file) {
 						blob := get_blob(post.post.embed.record.author.did, cid) or {
-							eprintln(err)
+							eprintln('${@FILE_LINE} > ${err.msg()}')
 							continue
 						}
 						save_image(image_tmp_file, blob) or {
-							eprintln(err)
+							eprintln('${@FILE_LINE} > ${err.msg()}')
 							continue
 						}
 					}
