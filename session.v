@@ -40,15 +40,18 @@ fn refresh_session(mut app KiteApp) ! {
 
 fn login(mut app KiteApp, mut w gui.Window) {
 	if session := create_session(app.user_name, app.password) {
+		app.user_name = ''
+		app.password = ''
+		app.error_msg = ''
 		save_session(session) or {
 			app.error_msg = err.msg()
 			return
 		}
 		app.session = load_session() or {
 			app.error_msg = err.msg()
+			print_error(err.msg(), @FILE_LINE)
 			return
 		}
-		app.error_msg = ''
 		spawn app.timeline_loop(mut w)
 	} else {
 		app.error_msg = err.msg()

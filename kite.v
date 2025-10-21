@@ -24,7 +24,7 @@ fn main() {
 	}
 	if is_valid_session(app.session) {
 		refresh_session(mut app) or {
-			eprintln('${@FILE_LINE} > ${err.msg()}')
+			print_error(err.msg(), @FILE_LINE)
 			exit(1)
 		}
 	}
@@ -55,7 +55,7 @@ fn create_system_font_theme() gui.Theme {
 		...gui.theme_dark_bordered_cfg
 		text_style: gui.TextStyle{
 			...gui.theme_dark_bordered_cfg.text_style
-			family: ''
+			family: '' // blank means use system font family
 		}
 	})
 }

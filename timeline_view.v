@@ -15,7 +15,7 @@ const post_link_style = gui.TextStyle{
 const post_repost_style = gui.TextStyle{
 	...gui.theme().text_style
 	color: post_text_color
-	size:  gui.theme().size_text_small + 1
+	size:  gui.theme().size_text_small
 }
 
 fn timeline_view(window &gui.Window) gui.View {
@@ -65,7 +65,7 @@ fn timeline_view(window &gui.Window) gui.View {
 					sizing:   gui.fill_fit
 					on_click: fn [post] (_ voidptr, mut e gui.Event, mut _ gui.Window) {
 						e.is_handled = true
-						os.open_uri(post.link_uri) or { eprintln('${@FILE_LINE} > ${err.msg()}') }
+						os.open_uri(post.link_uri) or { print_error(err.msg(), @FILE_LINE) }
 					}
 					on_hover: fn (mut _ gui.Layout, mut e gui.Event, mut w gui.Window) {
 						w.set_mouse_cursor_pointing_hand()
@@ -92,7 +92,7 @@ fn timeline_view(window &gui.Window) gui.View {
 							on_click:   fn [post] (_ &gui.ImageCfg, mut e gui.Event, mut _ gui.Window) {
 								e.is_handled = true
 								os.open_uri(post.bsky_link_uri) or {
-									eprintln('${@FILE_LINE} > ${err.msg()}')
+									print_error(err.msg(), @FILE_LINE)
 								}
 							}
 						),

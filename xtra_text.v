@@ -1,5 +1,6 @@
 import math
 import arrays
+import time
 
 fn truncate_long_fields(s string) string {
 	return arrays.join_to_string[string](s.fields(), ' ', fn (elem string) string {
@@ -50,4 +51,8 @@ fn short_size(size int) string {
 
 fn indexes_in_string(s string, start int, end int) bool {
 	return end > 0 && end <= s.len && start >= 0 && start < end
+}
+
+fn print_error(msg string, file_line string) {
+	eprintln('${time.now().hhmmss()} : ${file_line} > ${msg}')
 }
