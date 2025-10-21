@@ -1,8 +1,9 @@
 import gui
 import os
+import time
 
 const image_width = 270
-const max_image_height = 260
+const max_image_height = 250
 const max_timeline_posts = 25
 const thin_space = '\xE2\x80\x89'
 const link_color = gui.cornflower_blue
@@ -28,30 +29,17 @@ fn timeline_view(window &gui.Window) gui.View {
 		}
 		post_link_style := gui.TextStyle{
 			...base_text_style
-			size:  base_text_style.size - 1
 			color: link_color
+			size:  base_text_style.size - 1
 		}
 		post_repost_style := gui.TextStyle{
 			...base_text_style
 			color: post_text_color
-			size:  base_text_style.size - 1
+			size:  base_text_style.size - 2
 		}
 
 		for post in app.timeline.posts {
-			post_author := sanitize_text(post.author)
-			post_text := sanitize_text(post.text)
-			if post_author.is_blank() || post_text.is_blank() {
-				continue
-			}
-
 			mut post_content := []gui.View{cap: 10}
-
-			time_short := post.created_at
-				.utc_to_local()
-				.relative_short()
-				.fields()[0]
-			timestamp := if time_short == '0m' { 'now' } else { time_short }
-			author_timestamp := truncate_long_fields('${post_author} • ${timestamp}')
 
 			if !post.repost_by.is_blank() {
 				reposted_by := truncate_long_fields('•${thin_space}reposted by ${remove_non_ascii(post.repost_by)}')
@@ -61,13 +49,48 @@ fn timeline_view(window &gui.Window) gui.View {
 				)
 			}
 
+			author_timestamp := author_timestamp_text(post.author, post.created_at)
 			post_content << text_link(author_timestamp, post.bsky_link_uri, base_text_style)
+			post_content << gui.rectangle(height: gui.pad_x_small - 1) // spacer
 
 			post_content << gui.text(
 				text:       sanitize_text(post.text)
 				mode:       .wrap
 				text_style: post_text_style
 			)
+
+			quote_text := sanitize_text(post.quote_post_text)
+			if !quote_text.is_blank() {
+				quote_author_timestamp := author_timestamp_text(post.quote_post_author,
+					post.quote_post_created_at)
+				post_content << gui.row(
+					sizing:  gui.fill_fit
+					spacing: 0
+					content: [
+						gui.rectangle( // vertical line
+							width:  0.4
+							sizing: gui.fixed_fill
+							color:  post_text_color
+						),
+						gui.rectangle(width: gui.pad_medium),
+						gui.column(
+							padding: gui.padding_none
+							sizing:  gui.fill_fit
+							spacing: 0
+							content: [
+								text_link(quote_author_timestamp, post.quote_post_link_uri,
+									base_text_style),
+								gui.rectangle(height: gui.pad_x_small - 1),
+								gui.text(
+									text:       quote_text
+									mode:       .wrap
+									text_style: post_text_style
+								),
+							]
+						),
+					]
+				)
+			}
 
 			if !post.link_uri.is_blank() {
 				post_content << gui.rectangle(height: gui.pad_x_small) // spacer
@@ -87,16 +110,6 @@ fn timeline_view(window &gui.Window) gui.View {
 						gui.image(
 							file_name:  post.image_path
 							max_height: max_image_height
-							on_click:   fn [post] (_ &gui.ImageCfg, mut e gui.Event, mut _ gui.Window) {
-								e.is_handled = true
-								os.open_uri(post.bsky_link_uri) or {
-									print_error(err.msg(), @FILE_LINE)
-								}
-							}
-							on_hover:   fn (mut _ gui.Layout, mut e gui.Event, mut w gui.Window) {
-								w.set_mouse_cursor_pointing_hand()
-								e.is_handled = true
-							}
 						),
 					]
 				)
@@ -105,8 +118,7 @@ fn timeline_view(window &gui.Window) gui.View {
 			post_content << gui.rectangle(height: gui.pad_small) // spacer
 			post_content << gui.rectangle( // divider line
 				height: 0.4
-				width:  w - gui.pad_large - gui.pad_medium
-				sizing: gui.fixed_fixed
+				sizing: gui.fill_fixed
 				color:  post_text_color
 			)
 
@@ -128,9 +140,15 @@ fn timeline_view(window &gui.Window) gui.View {
 			top:    gui.pad_x_small
 			bottom: gui.pad_small
 			left:   gui.pad_small + gui.pad_x_small
-			right:  gui.pad_medium
+			right:  gui.pad_medium + gui.pad_x_small
 		}
-		content:     content
+		content:     [
+			gui.column(
+				padding: gui.padding_none
+				sizing:  gui.fill_fit
+				content: content
+			),
+		]
 	)
 }
 
@@ -138,13 +156,13 @@ fn text_link(link_title string, link_uri string, text_style gui.TextStyle) gui.V
 	return gui.column(
 		padding:  gui.padding_none
 		sizing:   gui.fill_fit
-		on_click: fn [link_uri, link_title] (_ voidptr, mut e gui.Event, mut _ gui.Window) {
+		on_click: fn [link_uri] (_ voidptr, mut e gui.Event, mut _ gui.Window) {
 			e.is_handled = true
 			os.open_uri(link_uri) or { print_error(err.msg(), @FILE_LINE) }
 		}
 		on_hover: fn (mut _ gui.Layout, mut e gui.Event, mut w gui.Window) {
-			w.set_mouse_cursor_pointing_hand()
 			e.is_handled = true
+			w.set_mouse_cursor_pointing_hand()
 		}
 		content:  [
 			gui.text(
@@ -154,4 +172,13 @@ fn text_link(link_title string, link_uri string, text_style gui.TextStyle) gui.V
 			),
 		]
 	)
+}
+
+fn author_timestamp_text(author string, created_at time.Time) string {
+	time_short := created_at
+		.utc_to_local()
+		.relative_short()
+		.fields()[0]
+	timestamp := if time_short == '0m' { 'now' } else { time_short }
+	return truncate_long_fields('${author} • ${timestamp}')
 }

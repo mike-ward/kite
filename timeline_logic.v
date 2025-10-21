@@ -62,6 +62,7 @@ fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 			}
 			app.error_msg = err.msg()
 			w.update_view(login_view)
+			break
 		}
 		time.sleep(time.minute)
 	}
