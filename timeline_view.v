@@ -2,6 +2,7 @@ import gui
 import os
 import time
 
+const line_thickness = 0.3
 const image_width = 270
 const max_image_height = 250
 const max_timeline_posts = 25
@@ -39,6 +40,12 @@ fn timeline_view(window &gui.Window) gui.View {
 		}
 
 		for post in app.timeline.posts {
+			post_text := sanitize_text(post.text)
+			quote_text := sanitize_text(post.quote_post_text)
+			if post_text.is_blank() && quote_text.is_blank() {
+				continue
+			}
+
 			mut post_content := []gui.View{cap: 10}
 
 			if !post.repost_by.is_blank() {
@@ -54,12 +61,11 @@ fn timeline_view(window &gui.Window) gui.View {
 			post_content << gui.rectangle(height: gui.pad_x_small - 1) // spacer
 
 			post_content << gui.text(
-				text:       sanitize_text(post.text)
+				text:       post_text
 				mode:       .wrap
 				text_style: post_text_style
 			)
 
-			quote_text := sanitize_text(post.quote_post_text)
 			if !quote_text.is_blank() {
 				quote_author_timestamp := author_timestamp_text(post.quote_post_author,
 					post.quote_post_created_at)
@@ -68,7 +74,7 @@ fn timeline_view(window &gui.Window) gui.View {
 					spacing: 0
 					content: [
 						gui.rectangle( // vertical line
-							width:  0.4
+							width:  line_thickness
 							sizing: gui.fixed_fill
 							color:  post_text_color
 						),
@@ -117,7 +123,7 @@ fn timeline_view(window &gui.Window) gui.View {
 
 			post_content << gui.rectangle(height: gui.pad_small) // spacer
 			post_content << gui.rectangle( // divider line
-				height: 0.4
+				height: line_thickness
 				sizing: gui.fill_fixed
 				color:  post_text_color
 			)
