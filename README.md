@@ -23,7 +23,7 @@ A desktop Bluesky client built with V-lang featuring a clean GUI interface for b
 1. Clone the repository:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/mike-ward/kite
 cd kite
 v install gui
 v run .
