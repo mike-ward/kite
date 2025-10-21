@@ -52,33 +52,9 @@ fn timeline_view(window &gui.Window) gui.View {
 				)
 			}
 			post_content << gui.text(text: author_timestamp)
-			post_content << gui.text(
-				text:       post_text
-				mode:       .wrap
-				text_style: post_text_style
-			)
+			post_content << text_link(post_text, post.bsky_link_uri, post_text_style)
 			if !post.link_uri.is_blank() {
-				post_content << gui.column(
-					padding:  gui.Padding{
-						top: gui.pad_small
-					}
-					sizing:   gui.fill_fit
-					on_click: fn [post] (_ voidptr, mut e gui.Event, mut _ gui.Window) {
-						e.is_handled = true
-						os.open_uri(post.link_uri) or { print_error(err.msg(), @FILE_LINE) }
-					}
-					on_hover: fn (mut _ gui.Layout, mut e gui.Event, mut w gui.Window) {
-						w.set_mouse_cursor_pointing_hand()
-						e.is_handled = true
-					}
-					content:  [
-						gui.text(
-							text:       sanitize_text(post.link_title)
-							mode:       .wrap
-							text_style: post_link_style
-						),
-					]
-				)
+				post_content << text_link(post.link_title, post.link_uri, post_link_style)
 			}
 			if !post.image_path.is_blank() {
 				post_content << gui.column(
@@ -126,5 +102,29 @@ fn timeline_view(window &gui.Window) gui.View {
 			right:  gui.pad_medium
 		}
 		content:   content
+	)
+}
+
+fn text_link(link_title string, link_uri string, text_style gui.TextStyle) gui.View {
+	return gui.column(
+		padding:  gui.Padding{
+			top: gui.pad_small
+		}
+		sizing:   gui.fill_fit
+		on_click: fn [link_uri, link_title] (_ voidptr, mut e gui.Event, mut _ gui.Window) {
+			e.is_handled = true
+			os.open_uri(link_uri) or { print_error(err.msg(), @FILE_LINE) }
+		}
+		on_hover: fn (mut _ gui.Layout, mut e gui.Event, mut w gui.Window) {
+			w.set_mouse_cursor_pointing_hand()
+			e.is_handled = true
+		}
+		content:  [
+			gui.text(
+				text:       sanitize_text(link_title)
+				mode:       .wrap
+				text_style: text_style
+			),
+		]
 	)
 }
