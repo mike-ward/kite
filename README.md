@@ -4,6 +4,8 @@ A desktop Bluesky client built with V-lang featuring a clean GUI interface for b
 
 ![screenshot.png](screenshot.png)
 
+As you can see from the screenshot, I park it along the right edge of the screen and keep it open while I'm working.
+
 ## Features
 
 - 🐦 Browse your Bluesky timeline
