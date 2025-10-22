@@ -33,6 +33,7 @@ fn refresh_session(mut app KiteApp) ! {
 		refresh_jwt: refresh.refresh_jwt
 	}
 	save_session(session)!
+	app.session = session
 }
 
 fn login(mut app KiteApp, mut w gui.Window) {

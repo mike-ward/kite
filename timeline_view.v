@@ -193,5 +193,5 @@ fn author_timestamp_text(author string, created_at time.Time) string {
 		.relative_short()
 		.fields()[0]
 	timestamp := if time_short == '0m' { 'now' } else { time_short }
-	return truncate_long_fields('${author} • ${timestamp}')
+	return truncate_long_fields('${sanitize_text(author)} • ${timestamp}')
 }

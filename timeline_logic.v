@@ -84,7 +84,7 @@ fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 		} else {
 			if fallback_counter < 10 {
 				fallback_counter++
-				refresh_session(mut app) or {}
+				refresh_session(mut app) or { print_error(err.msg(), @FILE_LINE) }
 				time.sleep(time.second * fallback_counter * fallback_counter)
 				continue
 			}

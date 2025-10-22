@@ -24,7 +24,7 @@ fn remove_non_ascii(s string) string {
 			.replace('&mdash;', '—')
 			.replace('\xc2\xa0', ' ') // &nbsp;
 	})
-	printable := s1.runes().map(if it < rune(0x20) || it > rune(0x04FF) { rune(0x20) } else { it })
+	printable := s1.runes().map(if it < ` ` || it > rune(0x04FF) { ` ` } else { it })
 	return printable.string()
 }
 

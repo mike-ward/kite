@@ -2,8 +2,8 @@
 // a clean GUI interface for browsing your timeline.
 import gui
 
-pub const app_min_width = 300
-pub const app_height = 900
+pub const app_default_width = 300
+pub const app_default_height = 900
 
 @[heap]
 struct KiteApp {
@@ -16,24 +16,17 @@ mut:
 }
 
 fn main() {
-	mut app := &KiteApp{}
-	app.session = load_session() or {
-		app.error_msg = err.msg()
-		BSkySession{}
-	}
-	if is_valid_session(app.session) {
-		refresh_session(mut app) or {
-			print_error(err.msg(), @FILE_LINE)
-			exit(1)
-		}
-	}
 	mut window := gui.window(
-		state:   app
+		state:   &KiteApp{}
 		title:   'Kite'
-		width:   app_min_width
-		height:  app_height
+		width:   app_default_width
+		height:  app_default_height
 		on_init: fn (mut w gui.Window) {
 			mut app := kite_app(w)
+			app.session = load_session() or {
+				app.error_msg = err.msg()
+				BSkySession{}
+			}
 			if is_valid_session(app.session) {
 				app.start_timeline_loop(mut w)
 			} else {
