@@ -1,3 +1,5 @@
+// Kite is desktop Bluesky client built with V-lang featuring
+// a clean GUI interface for browsing your timeline.
 import gui
 
 pub const app_min_width = 300
@@ -33,7 +35,7 @@ fn main() {
 		on_init: fn (mut w gui.Window) {
 			mut app := kite_app(w)
 			if is_valid_session(app.session) {
-				spawn app.timeline_loop(mut w)
+				app.start_timeline_loop(mut w)
 			} else {
 				w.update_view(login_view)
 			}

@@ -1,3 +1,11 @@
+// timeline_logic.v implements the core timeline functionality for the Kite Bluesky client
+// Key features:
+// - Timeline data structures (Timeline and Post)
+// - Timeline refresh and update loop
+// - Post data conversion from Bluesky API format
+// - Image downloading and caching
+// - Link and quote post handling
+// - Session management and error handling
 import time
 import os
 import math
@@ -5,15 +13,18 @@ import stbi
 import net.http
 import gui
 
+// Directory constants for storing temporary images and cache
 const kite_dir = 'kite'
 const image_tmp_dir = os.join_path(os.temp_dir(), kite_dir)
 
+// Timeline represents a collection of posts to be displayed in the UI
 @[heap]
 struct Timeline {
 pub:
 	posts []Post
 }
 
+// Post represents a single post in the timeline with all associated metadata
 @[heap]
 struct Post {
 pub:
@@ -37,8 +48,20 @@ pub:
 	quote_post_link_uri   string
 }
 
+fn (mut app KiteApp) start_timeline_loop(mut w gui.Window) {
+	spawn app.timeline_loop(mut w)
+}
+
+// timeline_loop manages the main timeline update cycle:
+// - Fetches new timeline data from Bluesky API periodically
+// - Downloads and caches post images
+// - Updates the UI with new timeline content
+// - Handles session refresh and error fallback
+// - Runs continuously until error occurs
+// - Uses exponential backoff for retries
 fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 	mut fallback_counter := 0
+	mut last_refresh := time.now()
 	w.update_view(timeline_view)
 
 	for {
@@ -53,8 +76,13 @@ fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 
 			prune_disk_image_cache()
 			w.update_window()
+
+			if time.now() > last_refresh.add(time.hour) {
+				last_refresh = time.now()
+				refresh_session(mut app) or { print_error(err.msg(), @FILE_LINE) }
+			}
 		} else {
-			if fallback_counter < 3 {
+			if fallback_counter < 10 {
 				fallback_counter++
 				refresh_session(mut app) or {}
 				time.sleep(time.second * fallback_counter * fallback_counter)
@@ -62,6 +90,7 @@ fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 			}
 			app.error_msg = err.msg()
 			w.update_view(login_view)
+			w.update_window()
 			break
 		}
 		time.sleep(time.minute)
@@ -167,7 +196,7 @@ fn external_link(post BSkyPost) (string, string) {
 	return '', ''
 }
 
-// post_image downloads the first image blob assciated with the post
+// post_image downloads the first image blob associated with the post
 // and returns the file path where the image is stored and the alt text
 // for that image.
 fn post_image(post BSkyPost) (string, string) {
@@ -206,7 +235,7 @@ fn post_image(post BSkyPost) (string, string) {
 }
 
 // get_timeline_images retrieves images from bluesky.
-// Instead of direct links, an identitier (cid) is specified.
+// Instead of direct links, an identifier (cid) is specified.
 // The api also requires the authors identifier (did)
 fn get_timeline_images(timeline BSkyTimeline) {
 	os.mkdir_all(image_tmp_dir) or { print_error(err.msg(), @FILE_LINE) }

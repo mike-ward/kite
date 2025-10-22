@@ -54,5 +54,5 @@ fn indexes_in_string(s string, start int, end int) bool {
 }
 
 fn print_error(msg string, file_line string) {
-	eprintln('${time.now().hhmmss()} : ${file_line} > ${msg}')
+	eprintln('${time.now().hhmmss()} > ${file_line} > ${msg}')
 }

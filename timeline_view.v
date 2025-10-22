@@ -2,6 +2,7 @@ import gui
 import os
 import time
 
+const timeline_scroll_id = 1
 const line_thickness = 0.3
 const image_width = 270
 const max_image_height = 250
@@ -137,18 +138,24 @@ fn timeline_view(window &gui.Window) gui.View {
 		}
 	}
 	return gui.column(
-		id_scroll:   1
-		scroll_mode: .vertical_only
-		width:       w
-		height:      h
-		sizing:      gui.fixed_fixed
-		padding:     gui.Padding{
+		id_scroll:    timeline_scroll_id
+		scroll_mode:  .vertical_only
+		width:        w
+		height:       h
+		sizing:       gui.fixed_fixed
+		padding:      gui.Padding{
 			top:    gui.pad_x_small
 			bottom: gui.pad_small
 			left:   gui.pad_small + gui.pad_x_small
 			right:  gui.pad_medium + gui.pad_x_small
 		}
-		content:     [
+		on_any_click: fn (_ voidptr, mut e gui.Event, mut w gui.Window) {
+			if e.mouse_button == .right {
+				w.scroll_vertical_to(timeline_scroll_id, 0)
+				e.is_handled = true
+			}
+		}
+		content:      [
 			gui.column(
 				padding: gui.padding_none
 				sizing:  gui.fill_fit

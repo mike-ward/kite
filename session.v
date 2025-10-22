@@ -4,11 +4,8 @@ import gui
 
 fn load_session() !BSkySession {
 	path := get_session_path()
-	if os.exists(path) {
-		contents := os.read_file(path)!
-		return toml.decode[BSkySession](contents)!
-	}
-	return error('"${path}" does not exist')
+	contents := os.read_file(path)!
+	return toml.decode[BSkySession](contents)!
 }
 
 fn save_session(session BSkySession) ! {
@@ -52,7 +49,7 @@ fn login(mut app KiteApp, mut w gui.Window) {
 			print_error(err.msg(), @FILE_LINE)
 			return
 		}
-		spawn app.timeline_loop(mut w)
+		app.start_timeline_loop(mut w)
 	} else {
 		app.error_msg = err.msg()
 	}

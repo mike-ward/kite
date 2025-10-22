@@ -1,3 +1,6 @@
+// bsky_api.v implements Bluesky (AT Protocol) API client functionality.
+// Provides session management, timeline retrieval, and media blob fetching.
+// Main components: BSkySession, BSkyTimeline, and associated data structures.
 import json
 import net.http
 import os
