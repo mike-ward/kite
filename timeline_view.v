@@ -12,8 +12,39 @@ const link_color = gui.cornflower_blue
 const post_text_color = gui.rgb(160, 160, 160)
 
 fn timeline_view(window &gui.Window) gui.View {
-	app := kite_app(window)
 	w, h := window.window_size()
+	content := timeline_content(window)
+
+	return gui.column(
+		id_scroll:    timeline_scroll_id
+		scroll_mode:  .vertical_only
+		width:        w
+		height:       h
+		sizing:       gui.fixed_fixed
+		padding:      gui.Padding{
+			top:    gui.pad_x_small
+			bottom: gui.pad_small
+			left:   gui.pad_small + gui.pad_x_small
+			right:  gui.pad_medium + gui.pad_x_small
+		}
+		on_any_click: fn (_ voidptr, mut e gui.Event, mut w gui.Window) {
+			if e.mouse_button == .right {
+				w.scroll_vertical_to(timeline_scroll_id, 0)
+				e.is_handled = true
+			}
+		}
+		content:      [
+			gui.column(
+				padding: gui.padding_none
+				sizing:  gui.fill_fit
+				content: content
+			),
+		]
+	)
+}
+
+fn timeline_content(window &gui.Window) []gui.View {
+	app := kite_app(window)
 	mut content := []gui.View{cap: max_timeline_posts}
 
 	if app.timeline.posts.len == 0 {
@@ -21,7 +52,12 @@ fn timeline_view(window &gui.Window) gui.View {
 			sizing:  gui.fill_fill
 			h_align: .center
 			v_align: .middle
-			content: [gui.text(text: 'Fetching Timeline...', text_style: gui.theme().b1)]
+			content: [
+				gui.text(
+					text:       'Fetching Timeline...'
+					text_style: gui.theme().b1
+				),
+			]
 		)
 	} else {
 		base_text_style := gui.theme().n2
@@ -53,6 +89,7 @@ fn timeline_view(window &gui.Window) gui.View {
 				reposted_by := truncate_long_fields('•${thin_space}reposted by ${remove_non_ascii(post.repost_by)}')
 				post_content << gui.text(
 					text:       reposted_by
+					mode:       .wrap
 					text_style: post_repost_style
 				)
 			}
@@ -71,6 +108,12 @@ fn timeline_view(window &gui.Window) gui.View {
 				quote_author_timestamp := author_timestamp_text(post.quote_post_author,
 					post.quote_post_created_at)
 				post_content << gui.row(
+					padding: gui.Padding{
+						top:    gui.pad_medium
+						left:   gui.pad_small
+						bottom: gui.pad_medium
+						right:  gui.pad_small
+					}
 					sizing:  gui.fill_fit
 					spacing: 0
 					content: [
@@ -137,32 +180,7 @@ fn timeline_view(window &gui.Window) gui.View {
 			)
 		}
 	}
-	return gui.column(
-		id_scroll:    timeline_scroll_id
-		scroll_mode:  .vertical_only
-		width:        w
-		height:       h
-		sizing:       gui.fixed_fixed
-		padding:      gui.Padding{
-			top:    gui.pad_x_small
-			bottom: gui.pad_small
-			left:   gui.pad_small + gui.pad_x_small
-			right:  gui.pad_medium + gui.pad_x_small
-		}
-		on_any_click: fn (_ voidptr, mut e gui.Event, mut w gui.Window) {
-			if e.mouse_button == .right {
-				w.scroll_vertical_to(timeline_scroll_id, 0)
-				e.is_handled = true
-			}
-		}
-		content:      [
-			gui.column(
-				padding: gui.padding_none
-				sizing:  gui.fill_fit
-				content: content
-			),
-		]
-	)
+	return content
 }
 
 fn text_link(link_title string, link_uri string, text_style gui.TextStyle) gui.View {

@@ -61,38 +61,36 @@ fn (mut app KiteApp) start_timeline_loop(mut w gui.Window) {
 // - Uses exponential backoff for retries
 fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 	mut fallback_counter := 0
-	mut last_refresh := time.now()
 	w.update_view(timeline_view)
 
 	for {
-		if bluesky_timeline := get_timeline(app.session) {
-			fallback_counter = 0
-			get_timeline_images(bluesky_timeline)
-			timeline := from_bluesky_timeline(bluesky_timeline, max_timeline_posts)
-
-			w.@lock()
-			app.timeline = timeline
-			w.unlock()
-
-			prune_disk_image_cache()
-			w.update_window()
-
-			if time.now() > last_refresh.add(time.hour) {
-				last_refresh = time.now()
-				refresh_session(mut app) or { print_error(err.msg(), @FILE_LINE) }
-			}
-		} else {
+		bluesky_timeline := get_timeline(app.session) or {
 			if fallback_counter < 10 {
 				fallback_counter++
 				refresh_session(mut app) or { print_error(err.msg(), @FILE_LINE) }
 				time.sleep(time.second * fallback_counter * fallback_counter)
 				continue
 			}
+			w.@lock()
+			app.timeline = Timeline{}
+			w.unlock()
+
 			app.error_msg = err.msg()
 			w.update_view(login_view)
 			w.update_window()
 			break
 		}
+
+		fallback_counter = 0
+		get_timeline_images(bluesky_timeline)
+		timeline := from_bluesky_timeline(bluesky_timeline, max_timeline_posts)
+
+		w.@lock()
+		app.timeline = timeline
+		w.unlock()
+
+		prune_disk_image_cache()
+		w.update_window()
 		time.sleep(time.minute)
 	}
 }
