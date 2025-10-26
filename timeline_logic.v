@@ -30,6 +30,7 @@ struct Post {
 pub:
 	id                    string
 	author                string
+	verified              bool
 	created_at            time.Time
 	text                  string
 	link_uri              string
@@ -81,16 +82,16 @@ fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 			break
 		}
 
-		fallback_counter = 0
 		get_timeline_images(bluesky_timeline)
 		timeline := from_bluesky_timeline(bluesky_timeline, max_timeline_posts)
 
 		w.@lock()
 		app.timeline = timeline
+		prune_disk_image_cache(mut w)
 		w.unlock()
 
-		prune_disk_image_cache()
 		w.update_window()
+		fallback_counter = 0
 		time.sleep(time.minute)
 	}
 }
@@ -146,6 +147,7 @@ fn from_bluesky_post(post BSkyPost) Post {
 	return Post{
 		id:                    post.post.uri
 		author:                name
+		verified:              bluesky_post_verified(post)
 		created_at:            time.parse_iso8601(post.post.record.created_at) or { time.utc() }
 		text:                  text
 		link_uri:              uri
@@ -163,6 +165,10 @@ fn from_bluesky_post(post BSkyPost) Post {
 		quote_post_link_title: q_title
 		quote_post_link_uri:   q_uri
 	}
+}
+
+fn bluesky_post_verified(post BSkyPost) bool {
+	return post.post.author.verification.verified_status == 'valid'
 }
 
 fn bluesky_post_link(post BSkyPost) string {
@@ -386,7 +392,7 @@ fn inline_link(post BSkyPost) (string, int, int) {
 	return '', 0, 0
 }
 
-fn prune_disk_image_cache() {
+fn prune_disk_image_cache(mut window gui.Window) {
 	entries := os.ls(image_tmp_dir) or { return }
 	for entry in entries {
 		path := os.join_path_single(image_tmp_dir, entry)
@@ -395,6 +401,7 @@ fn prune_disk_image_cache() {
 		diff := time.utc() - date
 		if diff > time.hour {
 			os.rm(path) or {}
+			// window.remove_image_from_cache_by_file_name(path)
 		}
 	}
 }

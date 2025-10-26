@@ -103,6 +103,9 @@ pub:
 	did          string
 	handle       string
 	display_name string @[json: 'displayName']
+	verification struct {
+		verified_status string @[json: 'verifiedStatus']
+	}
 }
 
 pub struct EmbedMedia {

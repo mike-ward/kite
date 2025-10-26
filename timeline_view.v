@@ -11,7 +11,7 @@ const thin_space = '\xE2\x80\x89'
 const link_color = gui.cornflower_blue
 const post_text_color = gui.rgb(160, 160, 160)
 
-fn timeline_view(window &gui.Window) gui.View {
+fn timeline_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
 	content := timeline_content(window)
 
@@ -191,8 +191,12 @@ fn text_link(link_title string, link_uri string, text_style gui.TextStyle) gui.V
 			e.is_handled = true
 			os.open_uri(link_uri) or { print_error(err.msg(), @FILE_LINE) }
 		}
-		on_hover: fn (mut _ gui.Layout, mut e gui.Event, mut w gui.Window) {
+		on_hover: fn (mut layout gui.Layout, mut e gui.Event, mut w gui.Window) {
 			e.is_handled = true
+			layout.children[0].shape.text_style = &gui.TextStyle{
+				...layout.children[0].shape.text_style
+				color: gui.cornflower_blue
+			}
 			w.set_mouse_cursor_pointing_hand()
 		}
 		content:  [
