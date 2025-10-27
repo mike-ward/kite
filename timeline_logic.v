@@ -74,9 +74,9 @@ fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 			}
 			w.@lock()
 			app.timeline = Timeline{}
+			app.error_msg = err.msg()
 			w.unlock()
 
-			app.error_msg = err.msg()
 			w.update_view(login_view)
 			w.update_window()
 			break
@@ -401,7 +401,7 @@ fn prune_disk_image_cache(mut window gui.Window) {
 		diff := time.utc() - date
 		if diff > time.hour {
 			os.rm(path) or {}
-			// window.remove_image_from_cache_by_file_name(path)
+			window.remove_image_from_cache_by_file_name(path)
 		}
 	}
 }
