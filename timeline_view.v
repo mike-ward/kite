@@ -189,7 +189,7 @@ fn text_link(link_title string, link_uri string, text_style gui.TextStyle) gui.V
 		sizing:   gui.fill_fit
 		on_click: fn [link_uri] (_ voidptr, mut e gui.Event, mut _ gui.Window) {
 			e.is_handled = true
-			os.open_uri(link_uri) or { print_error(err.msg(), @FILE_LINE) }
+			os.open_uri(link_uri) or { log_error(err.msg(), @FILE_LINE) }
 		}
 		on_hover: fn (mut layout gui.Layout, mut e gui.Event, mut w gui.Window) {
 			e.is_handled = true

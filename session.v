@@ -47,7 +47,7 @@ fn login(mut app KiteApp, mut w gui.Window) {
 		}
 		app.session = load_session() or {
 			app.error_msg = err.msg()
-			print_error(err.msg(), @FILE_LINE)
+			log_error(err.msg(), @FILE_LINE)
 			return
 		}
 		app.start_timeline_loop(mut w)

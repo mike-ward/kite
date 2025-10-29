@@ -1,6 +1,17 @@
-import math
 import arrays
+import log
 import time
+import gui
+
+fn create_system_font_theme() gui.Theme {
+	return gui.theme_maker(gui.ThemeCfg{
+		...gui.theme_dark_bordered_cfg
+		text_style: gui.TextStyle{
+			...gui.theme_dark_bordered_cfg.text_style
+			family: '' // blank means use system font family
+		}
+	})
+}
 
 fn truncate_long_fields(s string) string {
 	return arrays.join_to_string[string](s.fields(), ' ', fn (elem string) string {
@@ -13,7 +24,6 @@ fn truncate_long_fields(s string) string {
 
 fn remove_non_ascii(s string) string {
 	s1 := arrays.join_to_string[string](s.fields(), ' ', fn (elem string) string {
-		// These characters don't work with v-ui for now
 		return elem
 			.replace('“', '"')
 			.replace('”', '"')
@@ -33,26 +43,10 @@ fn sanitize_text(s string) string {
 	return remove_non_ascii(t)
 }
 
-fn short_size(size int) string {
-	kb := 1000
-	mut sz := f64(size)
-	for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z'] {
-		if sz < kb {
-			short := match unit == '' {
-				true { size.str() }
-				else { math.round_sig(sz + .049999, 1).str() }
-			}
-			return '${short}${unit}'
-		}
-		sz /= kb
-	}
-	return size.str()
-}
-
 fn indexes_in_string(s string, start int, end int) bool {
 	return end > 0 && end <= s.len && start >= 0 && start < end
 }
 
-fn print_error(msg string, file_line string) {
-	eprintln('${time.now().hhmmss()} > ${file_line} > ${msg}')
+fn log_error(msg string, file_line string) {
+	log.error('${time.now().hhmmss()} > ${file_line} > ${msg}')
 }

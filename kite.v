@@ -41,13 +41,3 @@ fn main() {
 fn kite_app(w &gui.Window) &KiteApp {
 	return w.state[KiteApp]()
 }
-
-fn create_system_font_theme() gui.Theme {
-	return gui.theme_maker(gui.ThemeCfg{
-		...gui.theme_dark_bordered_cfg
-		text_style: gui.TextStyle{
-			...gui.theme_dark_bordered_cfg.text_style
-			family: '' // blank means use system font family
-		}
-	})
-}
