@@ -20,7 +20,7 @@ fn login_view(window &gui.Window) gui.View {
 				id_focus:        1
 				sizing:          gui.fixed_fit
 				width:           field_width
-				on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
+				on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 					mut app := kite_app(w)
 					app.user_name = s
 				}
@@ -32,7 +32,7 @@ fn login_view(window &gui.Window) gui.View {
 				id_focus:        2
 				sizing:          gui.fixed_fit
 				width:           field_width
-				on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
+				on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 					mut app := kite_app(w)
 					app.password = s
 				}
