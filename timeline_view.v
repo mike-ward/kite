@@ -16,6 +16,7 @@ fn timeline_view(mut window gui.Window) gui.View {
 	content := timeline_content(window)
 
 	return gui.column(
+		id_focus:     1
 		id_scroll:    timeline_scroll_id
 		scroll_mode:  .vertical_only
 		width:        w
