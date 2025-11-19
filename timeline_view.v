@@ -111,7 +111,7 @@ fn timeline_content(window &gui.Window) []gui.View {
 				post_content << gui.row(
 					padding: gui.Padding{
 						top:    gui.pad_medium
-						left:   gui.pad_small
+						left:   gui.pad_x_small
 						bottom: gui.pad_medium
 						right:  gui.pad_small
 					}
