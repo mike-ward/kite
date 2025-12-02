@@ -50,3 +50,11 @@ fn indexes_in_string(s string, start int, end int) bool {
 fn log_error(msg string, file_line string) {
 	log.error('${time.now().hhmmss()} > ${file_line} > ${msg}')
 }
+
+fn change_font_size(delta int, min_size int, max_size int, mut window gui.Window) {
+	size := gui.theme().n3.size + delta
+	if size >= min_size && size <= max_size {
+		new_theme := gui.theme_change_font_size(size) or { return }
+		window.set_theme(new_theme)
+	}
+}

@@ -17,11 +17,12 @@ mut:
 
 fn main() {
 	mut window := gui.window(
-		state:   &KiteApp{}
-		title:   'Kite'
-		width:   app_default_width
-		height:  app_default_height
-		on_init: fn (mut w gui.Window) {
+		state:    &KiteApp{}
+		title:    'Kite'
+		width:    app_default_width
+		height:   app_default_height
+		on_event: app_on_event
+		on_init:  fn (mut w gui.Window) {
 			mut app := kite_app(w)
 			app.session = load_session() or {
 				app.error_msg = err.msg()
@@ -40,4 +41,15 @@ fn main() {
 
 fn kite_app(w &gui.Window) &KiteApp {
 	return w.state[KiteApp]()
+}
+
+fn app_on_event(e &gui.Event, mut w gui.Window) {
+	if e.typ == gui.EventType.mouse_scroll && e.modifiers == gui.Modifier.ctrl {
+		delta := match true {
+			e.scroll_y < 0 { 1 }
+			e.scroll_y > 0 { -1 }
+			else { return }
+		}
+		change_font_size(delta, 12, 30, mut w)
+	}
 }
