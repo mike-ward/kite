@@ -52,9 +52,9 @@ fn log_error(msg string, file_line string) {
 }
 
 fn change_font_size(delta int, min_size int, max_size int, mut window gui.Window) {
-	size := gui.theme().n3.size + delta
-	if size >= min_size && size <= max_size {
-		new_theme := gui.theme_change_font_size(size) or { return }
-		window.set_theme(new_theme)
+	new_theme := gui.theme().adjust_font_size(delta, min_size, max_size) or {
+		eprintln(err.msg())
+		return
 	}
+	window.set_theme(new_theme)
 }
