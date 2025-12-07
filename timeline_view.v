@@ -149,7 +149,7 @@ fn timeline_content(window &gui.Window) []gui.View {
 					post_link_style)
 			}
 
-			if !post.image_path.is_blank() {
+			if !post.image_path.is_blank() && app.show_images {
 				post_content << gui.column(
 					h_align: .center
 					padding: gui.Padding{

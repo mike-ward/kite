@@ -85,7 +85,9 @@ fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 
 		prune_disk_image_cache(mut w)
 		if !first_time {
-			get_timeline_images(bluesky_timeline)
+			if app.show_images {
+				get_timeline_images(bluesky_timeline)
+			}
 		}
 		timeline := from_bluesky_timeline(bluesky_timeline, max_timeline_posts)
 
@@ -99,7 +101,9 @@ fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 		// the timeline to appear quicker on first load.
 		if first_time {
 			first_time = false
-			get_timeline_images(bluesky_timeline)
+			if app.show_images {
+				get_timeline_images(bluesky_timeline)
+			}
 			w.update_window()
 		}
 		fallback_counter = 0
