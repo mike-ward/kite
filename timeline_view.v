@@ -87,7 +87,7 @@ fn timeline_content(window &gui.Window) []gui.View {
 			mut post_content := []gui.View{cap: 10}
 
 			if !post.repost_by.is_blank() {
-				reposted_by := truncate_long_fields('•${thin_space}reposted by ${remove_non_ascii(post.repost_by)}')
+				reposted_by := truncate_long_fields('•${thin_space}reposted by ${substitute_and_collapse_white_space(post.repost_by)}')
 				post_content << gui.text(
 					text:       reposted_by
 					mode:       .wrap

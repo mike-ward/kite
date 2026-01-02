@@ -22,25 +22,29 @@ fn truncate_long_fields(s string) string {
 	})
 }
 
-fn remove_non_ascii(s string) string {
-	s1 := arrays.join_to_string[string](s.fields(), ' ', fn (elem string) string {
+const space = 0x20
+const line_feed = 0x0A
+const max_codepoint = 0x4FF
+
+fn substitute_and_collapse_white_space(s string) string {
+	sa := s.split_any(' \t') // keep line feeds
+	ss := arrays.join_to_string[string](sa, ' ', fn (elem string) string {
 		return elem
-			.replace('“', '"')
-			.replace('”', '"')
-			.replace('’', "'")
-			.replace('‘', "'")
-			.replace('–', '-')
-			.replace('…', '...')
-			.replace('&mdash;', '—')
-			.replace('\xc2\xa0', ' ') // &nbsp;
+			.replace_each(['“', '"', '”', '"', '’', "'", '‘', "'", '–', '-', '…', '...',
+				'&mdash;', '—', '\xc2\xa0', ' '])
+			.runes().map(match true {
+			it == line_feed { it }
+			it < space { space }
+			it > max_codepoint { space }
+			else { it }
+		}).string()
 	})
-	printable := s1.runes().map(if it < ` ` || it > rune(0x04FF) { ` ` } else { it })
-	return printable.string()
+	return ss
 }
 
 fn sanitize_text(s string) string {
 	t := truncate_long_fields(s)
-	return remove_non_ascii(t)
+	return substitute_and_collapse_white_space(t)
 }
 
 fn indexes_in_string(s string, start int, end int) bool {
