@@ -9,7 +9,7 @@ const max_image_height = 250
 const max_timeline_posts = 25
 const thin_space = '\xE2\x80\x89'
 const link_color = gui.cornflower_blue
-const post_text_color = gui.rgb(160, 160, 160)
+const post_text_color = gui.rgb(0xA0, 0xA0, 0xA0)
 
 fn timeline_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
@@ -55,13 +55,12 @@ fn timeline_content(window &gui.Window) []gui.View {
 			v_align: .middle
 			content: [
 				gui.text(
-					text:       'Fetching Timeline...'
-					text_style: gui.theme().b1
+					text: 'Fetching Timeline...'
 				),
 			]
 		)
 	} else {
-		base_text_style := gui.theme().n2
+		base_text_style := gui.theme().n3
 		post_text_style := gui.TextStyle{
 			...base_text_style
 			color: post_text_color
@@ -74,7 +73,7 @@ fn timeline_content(window &gui.Window) []gui.View {
 		post_repost_style := gui.TextStyle{
 			...base_text_style
 			color: post_text_color
-			size:  base_text_style.size - 2
+			size:  base_text_style.size - 1
 		}
 
 		for post in app.timeline.posts {
@@ -87,7 +86,7 @@ fn timeline_content(window &gui.Window) []gui.View {
 			mut post_content := []gui.View{cap: 10}
 
 			if !post.repost_by.is_blank() {
-				reposted_by := truncate_long_fields('•${thin_space}reposted by ${substitute_and_collapse_white_space(post.repost_by)}')
+				reposted_by := truncate_long_fields('•${thin_space}reposted by ${post.repost_by}')
 				post_content << gui.text(
 					text:       reposted_by
 					mode:       .wrap

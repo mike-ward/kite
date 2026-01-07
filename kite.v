@@ -40,7 +40,7 @@ fn main() {
 			}
 		}
 	)
-	window.set_theme(create_system_font_theme())
+	window.set_theme(gui.theme_dark_bordered)
 	window.run()
 }
 
@@ -60,6 +60,6 @@ fn app_on_event(e &gui.Event, mut w gui.Window) {
 			e.scroll_y > 0 { -1 }
 			else { return }
 		}
-		change_font_size(delta, 12, 30, mut w)
+		change_font_size(delta, 4, 30, mut w)
 	}
 }
