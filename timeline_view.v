@@ -3,13 +3,14 @@ import os
 import time
 
 const timeline_scroll_id = 1
-const line_thickness = 0.3
+const line_thickness = 0.5
 const image_width = 270
 const max_image_height = 250
 const max_timeline_posts = 25
 const thin_space = '\xE2\x80\x89'
 const link_color = gui.cornflower_blue
 const post_text_color = gui.rgb(0xA0, 0xA0, 0xA0)
+const post_divider_color = gui.rgb(0x70, 0x70, 0x70)
 
 fn timeline_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
@@ -68,7 +69,7 @@ fn timeline_content(window &gui.Window) []gui.View {
 		post_link_style := gui.TextStyle{
 			...base_text_style
 			color: link_color
-			size:  base_text_style.size - 1
+			size:  base_text_style.size
 		}
 		post_repost_style := gui.TextStyle{
 			...base_text_style
@@ -169,7 +170,7 @@ fn timeline_content(window &gui.Window) []gui.View {
 			post_content << gui.rectangle( // divider line
 				height: line_thickness
 				sizing: gui.fill_fixed
-				color:  post_text_color
+				color:  post_divider_color
 			)
 
 			content << gui.column(

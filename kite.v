@@ -38,6 +38,8 @@ fn main() {
 			} else {
 				w.update_view(login_view)
 			}
+
+			change_font_size(-1, 4, 30, mut w)
 		}
 	)
 	window.set_theme(gui.theme_dark_bordered)
