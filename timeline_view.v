@@ -69,7 +69,7 @@ fn timeline_content(window &gui.Window) []gui.View {
 		post_link_style := gui.TextStyle{
 			...base_text_style
 			color: link_color
-			size:  base_text_style.size
+			size:  base_text_style.size - 1
 		}
 		post_repost_style := gui.TextStyle{
 			...base_text_style

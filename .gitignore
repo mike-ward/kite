@@ -1,6 +1,6 @@
 # Binaries for programs and plugins
 main
-kite
+kite*
 *.exe
 *.exe~
 *.so

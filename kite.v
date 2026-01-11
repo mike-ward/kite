@@ -1,5 +1,5 @@
 // Kite is desktop Bluesky client built with V-lang featuring
-// a clean GUI interface for browsing your timeline.
+// a simple GUI interface for browsing your timeline.
 import gui
 import os
 
@@ -38,8 +38,6 @@ fn main() {
 			} else {
 				w.update_view(login_view)
 			}
-
-			change_font_size(-1, 4, 30, mut w)
 		}
 	)
 	window.set_theme(gui.theme_dark_bordered)
