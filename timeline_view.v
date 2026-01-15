@@ -9,7 +9,7 @@ const max_image_height = 250
 const max_timeline_posts = 25
 const thin_space = '\xE2\x80\x89'
 const link_color = gui.cornflower_blue
-const post_text_color = gui.rgb(0xA0, 0xA0, 0xA0)
+const post_text_color = gui.rgb(0xAA, 0xAA, 0xAA)
 const post_divider_color = gui.rgb(0x70, 0x70, 0x70)
 
 fn timeline_view(mut window gui.Window) gui.View {

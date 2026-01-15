@@ -24,7 +24,7 @@ fn log_error(msg string, file_line string) {
 	log.error('${time.now().hhmmss()} > ${file_line} > ${msg}')
 }
 
-fn change_font_size(delta int, min_size int, max_size int, mut window gui.Window) {
+fn change_font_size(delta f32, min_size int, max_size int, mut window gui.Window) {
 	new_theme := gui.theme().adjust_font_size(delta, min_size, max_size) or {
 		eprintln(err.msg())
 		return
