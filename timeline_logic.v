@@ -229,34 +229,40 @@ fn post_image(post BSkyPost) (string, string) {
 fn get_timeline_images(timeline BSkyTimeline) {
 	os.mkdir_all(image_tmp_dir) or { log_error(err.msg(), @FILE_LINE) }
 
+	mut threads := []thread{}
 	for post in timeline.posts {
-		image_sources := extract_image_sources(post)
-		for source in image_sources {
-			image_tmp_file := image_tmp_file_path(source.cid)
-			if !os.exists(image_tmp_file) {
-				if source.url.len > 0 {
-					// Download from URL (thumbnail)
-					response := http.get(source.url) or {
-						log_error(err.msg(), @FILE_LINE)
-						continue
-					}
-					if response.status() != .ok {
-						continue
-					}
-					save_image(image_tmp_file, response.body) or {
-						log_error(err.msg(), @FILE_LINE)
-						continue
-					}
-				} else {
-					// Download blob
-					blob := get_blob(source.author_did, source.cid) or {
-						log_error(err.msg(), @FILE_LINE)
-						continue
-					}
-					save_image(image_tmp_file, blob) or {
-						log_error(err.msg(), @FILE_LINE)
-						continue
-					}
+		threads << spawn download_post_images(post)
+	}
+	threads.wait()
+}
+
+fn download_post_images(post BSkyPost) {
+	image_sources := extract_image_sources(post)
+	for source in image_sources {
+		image_tmp_file := image_tmp_file_path(source.cid)
+		if !os.exists(image_tmp_file) {
+			if source.url.len > 0 {
+				// Download from URL (thumbnail)
+				response := http.get(source.url) or {
+					log_error(err.msg(), @FILE_LINE)
+					continue
+				}
+				if response.status() != .ok {
+					continue
+				}
+				save_image(image_tmp_file, response.body) or {
+					log_error(err.msg(), @FILE_LINE)
+					continue
+				}
+			} else {
+				// Download blob
+				blob := get_blob(source.author_did, source.cid) or {
+					log_error(err.msg(), @FILE_LINE)
+					continue
+				}
+				save_image(image_tmp_file, blob) or {
+					log_error(err.msg(), @FILE_LINE)
+					continue
 				}
 			}
 		}
