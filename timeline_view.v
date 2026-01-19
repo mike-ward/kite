@@ -158,9 +158,16 @@ fn timeline_content(window &gui.Window) []gui.View {
 					}
 					sizing:  gui.fill_fit
 					content: [
-						gui.image(
-							file_name:  post.image_path
-							max_height: max_image_height
+						gui.column(
+							color:   gui.theme().color_border
+							padding: gui.Padding{0, 1, 1, 0}
+							radius:  0
+							content: [
+								gui.image(
+									file_name:  post.image_path
+									max_height: max_image_height
+								),
+							]
 						),
 					]
 				)

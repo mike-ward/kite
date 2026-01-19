@@ -63,7 +63,6 @@ fn (mut app KiteApp) start_timeline_loop(mut w gui.Window) {
 fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 	mut fallback_counter := 0
 	w.update_view(timeline_view)
-	mut first_time := true
 
 	for {
 		bluesky_timeline := get_timeline(app.session) or {
@@ -84,10 +83,8 @@ fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 		}
 
 		prune_disk_image_cache(mut w)
-		if !first_time {
-			if app.show_images {
-				get_timeline_images(bluesky_timeline)
-			}
+		if app.show_images {
+			get_timeline_images(bluesky_timeline)
 		}
 		timeline := from_bluesky_timeline(bluesky_timeline, max_timeline_posts)
 
@@ -99,11 +96,8 @@ fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 
 		// load images after first timeline update. Doing so allows
 		// the timeline to appear quicker on first load.
-		if first_time {
-			first_time = false
-			if app.show_images {
-				get_timeline_images(bluesky_timeline)
-			}
+		if app.show_images {
+			get_timeline_images(bluesky_timeline)
 			w.update_window()
 		}
 		fallback_counter = 0
@@ -219,35 +213,11 @@ fn external_link(post BSkyPost) (string, string) {
 // and returns the file path where the image is stored and the alt text
 // for that image.
 fn post_image(post BSkyPost) (string, string) {
-	if post.post.record.embed.images.len > 0 {
-		for image in post.post.record.embed.images {
-			cid := image.image.ref.link
-			tmp_file := image_tmp_file_path(cid)
-			if os.exists(tmp_file) {
-				return tmp_file, image.alt
-			}
-		}
-	} else if post.post.record.embed.media.images.len > 0 {
-		for image in post.post.record.embed.media.images {
-			cid := image.image.ref.link
-			tmp_file := image_tmp_file_path(cid)
-			if os.exists(tmp_file) {
-				return tmp_file, image.alt
-			}
-		}
-	} else if post.post.embed.thumbnail.len > 0 {
-		cid := post.post.embed.cid
-		tmp_file := image_tmp_file_path(cid)
+	sources := extract_image_sources(post)
+	for source in sources {
+		tmp_file := image_tmp_file_path(source.cid)
 		if os.exists(tmp_file) {
-			return tmp_file, ''
-		}
-	} else if post.post.embed.record.value.embed.images.len > 0 {
-		for image in post.post.embed.record.value.embed.images {
-			cid := image.image.ref.link
-			tmp_file := image_tmp_file_path(cid)
-			if os.exists(tmp_file) {
-				return tmp_file, image.alt
-			}
+			return tmp_file, source.alt
 		}
 	}
 	return '', ''
@@ -259,78 +229,87 @@ fn post_image(post BSkyPost) (string, string) {
 fn get_timeline_images(timeline BSkyTimeline) {
 	os.mkdir_all(image_tmp_dir) or { log_error(err.msg(), @FILE_LINE) }
 
-	// There are several places wehre images are buried.
-	// Similar and yet different enough to make for messy code.
 	for post in timeline.posts {
-		if post.post.record.embed.images.len > 0 {
-			for image in post.post.record.embed.images {
-				if image.image.ref.link.len > 0 {
-					cid := image.image.ref.link
-					image_tmp_file := image_tmp_file_path(cid)
-					if !os.exists(image_tmp_file) {
-						blob := get_blob(post.post.author.did, cid) or {
-							log_error(err.msg(), @FILE_LINE)
-							continue
-						}
-						save_image(image_tmp_file, blob) or {
-							log_error(err.msg(), @FILE_LINE)
-							continue
-						}
-					}
-				}
-			}
-		} else if post.post.record.embed.media.images.len > 0 {
-			for image in post.post.record.embed.media.images {
-				if image.image.ref.link.len > 0 {
-					cid := image.image.ref.link
-					image_tmp_file := image_tmp_file_path(cid)
-					if !os.exists(image_tmp_file) {
-						blob := get_blob(post.post.author.did, cid) or {
-							log_error(err.msg(), @FILE_LINE)
-							continue
-						}
-						save_image(image_tmp_file, blob) or {
-							log_error(err.msg(), @FILE_LINE)
-							continue
-						}
-					}
-				}
-			}
-		} else if post.post.embed.thumbnail.len > 0 {
-			cid := post.post.embed.cid
-			image_tmp_file := image_tmp_file_path(cid)
+		image_sources := extract_image_sources(post)
+		for source in image_sources {
+			image_tmp_file := image_tmp_file_path(source.cid)
 			if !os.exists(image_tmp_file) {
-				response := http.get(post.post.embed.thumbnail) or {
-					log_error(err.msg(), @FILE_LINE)
-					continue
-				}
-				if response.status() != .ok {
-					continue
-				}
-				save_image(image_tmp_file, response.body) or {
-					log_error(err.msg(), @FILE_LINE)
-					continue
-				}
-			}
-		} else if post.post.embed.record.value.embed.images.len > 0 {
-			for image in post.post.embed.record.value.embed.images {
-				if image.image.ref.link.len > 0 {
-					cid := image.image.ref.link
-					image_tmp_file := image_tmp_file_path(cid)
-					if !os.exists(image_tmp_file) {
-						blob := get_blob(post.post.embed.record.author.did, cid) or {
-							log_error(err.msg(), @FILE_LINE)
-							continue
-						}
-						save_image(image_tmp_file, blob) or {
-							log_error(err.msg(), @FILE_LINE)
-							continue
-						}
+				if source.url.len > 0 {
+					// Download from URL (thumbnail)
+					response := http.get(source.url) or {
+						log_error(err.msg(), @FILE_LINE)
+						continue
+					}
+					if response.status() != .ok {
+						continue
+					}
+					save_image(image_tmp_file, response.body) or {
+						log_error(err.msg(), @FILE_LINE)
+						continue
+					}
+				} else {
+					// Download blob
+					blob := get_blob(source.author_did, source.cid) or {
+						log_error(err.msg(), @FILE_LINE)
+						continue
+					}
+					save_image(image_tmp_file, blob) or {
+						log_error(err.msg(), @FILE_LINE)
+						continue
 					}
 				}
 			}
 		}
 	}
+}
+
+struct ImageSource {
+	cid        string
+	url        string
+	alt        string
+	author_did string
+}
+
+fn extract_image_sources(post BSkyPost) []ImageSource {
+	mut sources := []ImageSource{}
+	if post.post.record.embed.images.len > 0 {
+		for image in post.post.record.embed.images {
+			if image.image.ref.link.len > 0 {
+				sources << ImageSource{
+					cid:        image.image.ref.link
+					alt:        image.alt
+					author_did: post.post.author.did
+				}
+			}
+		}
+	} else if post.post.record.embed.media.images.len > 0 {
+		for image in post.post.record.embed.media.images {
+			if image.image.ref.link.len > 0 {
+				sources << ImageSource{
+					cid:        image.image.ref.link
+					alt:        image.alt
+					author_did: post.post.author.did
+				}
+			}
+		}
+	} else if post.post.embed.thumbnail.len > 0 {
+		sources << ImageSource{
+			cid:        post.post.embed.cid
+			url:        post.post.embed.thumbnail
+			author_did: post.post.author.did
+		}
+	} else if post.post.embed.record.value.embed.images.len > 0 {
+		for image in post.post.embed.record.value.embed.images {
+			if image.image.ref.link.len > 0 {
+				sources << ImageSource{
+					cid:        image.image.ref.link
+					alt:        image.alt
+					author_did: post.post.embed.record.author.did
+				}
+			}
+		}
+	}
+	return sources
 }
 
 fn save_image(name string, blob string) ! {
