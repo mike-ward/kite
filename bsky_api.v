@@ -19,8 +19,17 @@ pub:
 	refresh_jwt     string @[json: 'refreshJwt']
 }
 
+struct BSkyCreateSessionRequest {
+	identifier string
+	password   string
+}
+
 fn create_session(identifier string, password string) !BSkySession {
-	data := '{"identifier": "${identifier}", "password": "${password}"}'
+	request := BSkyCreateSessionRequest{
+		identifier: identifier
+		password:   password
+	}
+	data := json.encode(request)
 	response := http.post_json('${pds_host}/com.atproto.server.createSession', data)!
 
 	return match response.status() {
