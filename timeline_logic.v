@@ -16,6 +16,7 @@ import time
 // Directory constants for storing temporary images and cache
 const kite_dir = 'kite'
 const image_tmp_dir = os.join_path(os.temp_dir(), kite_dir)
+const thin_space = '\xE2\x80\x89'
 
 // Timeline represents a collection of posts to be displayed in the UI
 @[heap]
@@ -28,25 +29,30 @@ pub:
 @[heap]
 struct Post {
 pub:
-	id                    string
-	author                string
-	verified              bool
-	created_at            time.Time
-	text                  string
-	link_uri              string
-	link_title            string
-	image_path            string
-	image_alt             string
-	repost_by             string
-	replies               int
-	reposts               int
-	likes                 int
-	bsky_link_uri         string
-	quote_post_author     string
-	quote_post_created_at time.Time
-	quote_post_text       string
-	quote_post_link_title string
-	quote_post_link_uri   string
+	id                        string
+	author                    string
+	verified                  bool
+	created_at                time.Time
+	text                      string
+	link_uri                  string
+	link_title                string
+	image_path                string
+	image_alt                 string
+	repost_by                 string
+	replies                   int
+	reposts                   int
+	likes                     int
+	bsky_link_uri             string
+	quote_post_author         string
+	quote_post_created_at     time.Time
+	quote_post_text           string
+	quote_post_link_title     string
+	quote_post_link_uri       string
+	formatted_text            string
+	formatted_repost_by       string
+	formatted_time_author     string
+	formatted_quote_text      string
+	formatted_quote_time_auth string
 }
 
 fn (mut app KiteApp) start_timeline_loop(mut w gui.Window) {
@@ -131,6 +137,7 @@ fn from_bluesky_post(post BSkyPost) Post {
 	name := if d_name.len > 0 { d_name } else { handle }
 	path, alt := post_image(post)
 	bsky_link_uri := bluesky_post_link(post)
+	repost_by_name := repost_by(post)
 
 	// links are displayed below post text.
 	// If link appears in text, remove it from text.
@@ -139,41 +146,61 @@ fn from_bluesky_post(post BSkyPost) Post {
 	inline_uri, byte_start, byte_end := inline_link(post)
 	if indexes_in_string(text, byte_start, byte_end) {
 		uri = inline_uri
-		title = text[byte_start..byte_end]
+		title = sanitize_text(text[byte_start..byte_end])
 		text = text[0..byte_start] + text[byte_end..]
 	}
 
 	// quoted links are displayed below quoted text.
 	// If link appears in quoted text, remove it from quoted text.
 	mut q_text := get_quote_post_text(post)
-	q_uri, mut q_title, q_byte_start, q_byte_end := get_quote_post_link(post)
+	q_uri, _, q_byte_start, q_byte_end := get_quote_post_link(post)
 	if indexes_in_string(q_text, q_byte_start, q_byte_end) {
 		uri = q_uri
-		q_title = q_text[q_byte_start..q_byte_end]
+		// q_title = q_text[q_byte_start..q_byte_end] // Unused
 		q_text = q_text[0..q_byte_start] + q_text[q_byte_end..]
 	}
 
+	created_at := time.parse_iso8601(post.post.record.created_at) or { time.utc() }
+
 	return Post{
-		id:                    post.post.uri
-		author:                name
-		verified:              bluesky_post_verified(post)
-		created_at:            time.parse_iso8601(post.post.record.created_at) or { time.utc() }
-		text:                  text
-		link_uri:              uri
-		link_title:            title
-		image_path:            path
-		image_alt:             alt
-		repost_by:             repost_by(post)
-		replies:               post.post.replies
-		reposts:               post.post.reposts + post.post.quotes
-		likes:                 post.post.likes
-		bsky_link_uri:         bsky_link_uri
-		quote_post_author:     get_quote_post_author(post)
-		quote_post_created_at: get_quote_post_created_at(post)
-		quote_post_text:       q_text
-		quote_post_link_title: q_title
-		quote_post_link_uri:   q_uri
+		id:                        post.post.uri
+		author:                    name
+		verified:                  bluesky_post_verified(post)
+		created_at:                created_at
+		text:                      text
+		link_uri:                  uri
+		link_title:                title
+		image_path:                path
+		image_alt:                 alt
+		repost_by:                 repost_by_name
+		replies:                   post.post.replies
+		reposts:                   post.post.reposts + post.post.quotes
+		likes:                     post.post.likes
+		bsky_link_uri:             bsky_link_uri
+		quote_post_author:         get_quote_post_author(post)
+		quote_post_created_at:     get_quote_post_created_at(post)
+		quote_post_text:           q_text
+		quote_post_link_uri:       q_uri
+		formatted_text:            sanitize_text(text)
+		formatted_repost_by:       if repost_by_name.len > 0 {
+			truncate_long_fields('•${thin_space}reposted by ${repost_by_name}')
+		} else {
+			''
+		}
+		formatted_time_author:     author_timestamp_text(name, created_at)
+		formatted_quote_text:      sanitize_text(q_text)
+		formatted_quote_time_auth: author_timestamp_text(get_quote_post_author(post),
+			get_quote_post_created_at(post))
 	}
+}
+
+fn author_timestamp_text(author string, created_at time.Time) string {
+	time_short := created_at
+		.utc_to_local()
+		.relative_short()
+		.fields()[0]
+	timestamp := if time_short == '0m' { 'now' } else { time_short }
+	return truncate_long_fields('${sanitize_text(author)} • ${timestamp}')
 }
 
 fn bluesky_post_verified(post BSkyPost) bool {
@@ -204,7 +231,7 @@ fn external_link(post BSkyPost) (string, string) {
 	external := post.post.record.embed.external
 	if external.uri.len > 0 {
 		title := if external.title.len > 0 { external.title } else { external.uri }
-		return external.uri, title
+		return external.uri, sanitize_text(title)
 	}
 	return '', ''
 }

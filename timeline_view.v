@@ -1,13 +1,11 @@
 import gui
 import os
-import time
 
 const timeline_scroll_id = 1
 const line_thickness = 0.5
 const image_width = 270
 const max_image_height = 250
 const max_timeline_posts = 25
-const thin_space = '\xE2\x80\x89'
 const link_color = gui.cornflower_blue
 const post_text_color = gui.rgb(0xAA, 0xAA, 0xAA)
 const post_divider_color = gui.rgb(0x70, 0x70, 0x70)
@@ -78,36 +76,31 @@ fn timeline_content(window &gui.Window) []gui.View {
 		}
 
 		for post in app.timeline.posts {
-			post_text := sanitize_text(post.text)
-			quote_text := sanitize_text(post.quote_post_text)
-			if post_text.is_blank() && quote_text.is_blank() {
+			if post.formatted_text.is_blank() && post.formatted_quote_text.is_blank() {
 				continue
 			}
 
 			mut post_content := []gui.View{cap: 10}
 
-			if !post.repost_by.is_blank() {
-				reposted_by := truncate_long_fields('•${thin_space}reposted by ${post.repost_by}')
+			if !post.formatted_repost_by.is_blank() {
 				post_content << gui.text(
-					text:       reposted_by
+					text:       post.formatted_repost_by
 					mode:       .wrap
 					text_style: post_repost_style
 				)
 			}
 
-			author_timestamp := author_timestamp_text(post.author, post.created_at)
-			post_content << text_link(author_timestamp, post.bsky_link_uri, base_text_style)
+			post_content << text_link(post.formatted_time_author, post.bsky_link_uri,
+				base_text_style)
 			post_content << gui.rectangle(height: gui.pad_x_small - 1) // spacer
 
 			post_content << gui.text(
-				text:       post_text
+				text:       post.formatted_text
 				mode:       .wrap
 				text_style: post_text_style
 			)
 
-			if !quote_text.is_blank() {
-				quote_author_timestamp := author_timestamp_text(post.quote_post_author,
-					post.quote_post_created_at)
+			if !post.formatted_quote_text.is_blank() {
 				post_content << gui.row(
 					padding: gui.Padding{
 						top:    gui.pad_medium
@@ -129,11 +122,11 @@ fn timeline_content(window &gui.Window) []gui.View {
 							sizing:  gui.fill_fit
 							spacing: 0
 							content: [
-								text_link(quote_author_timestamp, post.quote_post_link_uri,
+								text_link(post.formatted_quote_time_auth, post.quote_post_link_uri,
 									base_text_style),
 								gui.rectangle(height: gui.pad_x_small - 1),
 								gui.text(
-									text:       quote_text
+									text:       post.formatted_quote_text
 									mode:       .wrap
 									text_style: post_text_style
 								),
@@ -145,8 +138,7 @@ fn timeline_content(window &gui.Window) []gui.View {
 
 			if !post.link_uri.is_blank() {
 				post_content << gui.rectangle(height: gui.pad_x_small) // spacer
-				post_content << text_link(sanitize_text(post.link_title), post.link_uri,
-					post_link_style)
+				post_content << text_link(post.link_title, post.link_uri, post_link_style) // link_title is already sanitized in logic if needed, but here we just used it directly. Wait, previous code used sanitized_text(post.link_title). I should probably sanitize it in logic too.
 			}
 
 			if !post.image_path.is_blank() && app.show_images {
@@ -215,13 +207,4 @@ fn text_link(link_title string, link_uri string, text_style gui.TextStyle) gui.V
 			),
 		]
 	)
-}
-
-fn author_timestamp_text(author string, created_at time.Time) string {
-	time_short := created_at
-		.utc_to_local()
-		.relative_short()
-		.fields()[0]
-	timestamp := if time_short == '0m' { 'now' } else { time_short }
-	return truncate_long_fields('${sanitize_text(author)} • ${timestamp}')
 }
