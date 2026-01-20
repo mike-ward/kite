@@ -89,21 +89,24 @@ fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 		}
 
 		prune_disk_image_cache(mut w)
-		if app.show_images {
-			get_timeline_images(bluesky_timeline)
-		}
-		timeline := from_bluesky_timeline(bluesky_timeline, max_timeline_posts)
 
+		// 1. Render text immediately (images might be missing)
+		timeline := from_bluesky_timeline(bluesky_timeline, max_timeline_posts)
 		w.@lock()
 		app.timeline = timeline
 		w.unlock()
-
 		w.update_window()
 
-		// load images after first timeline update. Doing so allows
-		// the timeline to appear quicker on first load.
+		// 2. Download images in background
 		if app.show_images {
 			get_timeline_images(bluesky_timeline)
+
+			// 3. Re-render with images (now downloaded)
+			// We need to re-run from_bluesky_timeline so post_image() finds the files
+			timeline_with_images := from_bluesky_timeline(bluesky_timeline, max_timeline_posts)
+			w.@lock()
+			app.timeline = timeline_with_images
+			w.unlock()
 			w.update_window()
 		}
 		fallback_counter = 0
