@@ -41,6 +41,7 @@ fn main() {
 		}
 	)
 	window.set_theme(gui.theme_dark_bordered)
+	change_font_size(0.5, 4, 30, mut window)
 	window.run()
 }
 
