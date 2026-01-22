@@ -152,7 +152,7 @@ fn timeline_content(window &gui.Window) []gui.View {
 					content: [
 						gui.column(
 							color:   gui.theme().color_border
-							padding: gui.Padding{0, 1, 1, 0}
+							padding: gui.padding_one
 							radius:  0
 							content: [
 								gui.image(
