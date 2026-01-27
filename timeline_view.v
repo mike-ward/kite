@@ -22,9 +22,9 @@ fn timeline_view(mut window gui.Window) gui.View {
 		height:       h
 		sizing:       gui.fixed_fixed
 		padding:      gui.Padding{
-			top:    gui.pad_x_small
+			top:    1
 			bottom: gui.pad_small
-			left:   gui.pad_small + gui.pad_x_small
+			left:   gui.pad_x_small
 			right:  gui.pad_medium + gui.pad_x_small
 		}
 		on_any_click: fn (_ voidptr, mut e gui.Event, mut w gui.Window) {
@@ -144,10 +144,7 @@ fn timeline_content(window &gui.Window) []gui.View {
 			if !post.image_path.is_blank() && app.show_images {
 				post_content << gui.column(
 					h_align: .center
-					padding: gui.Padding{
-						top:   gui.pad_small
-						right: gui.pad_small
-					}
+					padding: gui.padding_none
 					sizing:  gui.fill_fit
 					content: [
 						gui.column(

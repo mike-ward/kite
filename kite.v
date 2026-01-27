@@ -55,12 +55,11 @@ fn kite_app(w &gui.Window) &KiteApp {
 }
 
 fn app_on_event(e &gui.Event, mut w gui.Window) {
-	if e.typ == gui.EventType.mouse_scroll && e.modifiers == gui.Modifier.ctrl {
-		delta := match true {
-			e.scroll_y < 0 { f32(-0.25) }
-			e.scroll_y > 0 { f32(0.25) }
-			else { return }
+	if e.typ == gui.EventType.key_down && e.modifiers == gui.Modifier.alt {
+		match e.key_code {
+			.up { change_font_size(0.25, 4, 30, mut w) }
+			.down { change_font_size(-0.25, 4, 30, mut w) }
+			else {}
 		}
-		change_font_size(delta, 4, 30, mut w)
 	}
 }
