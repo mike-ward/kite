@@ -17,6 +17,8 @@ import time
 const kite_dir = 'kite'
 const image_tmp_dir = os.join_path(os.temp_dir(), kite_dir)
 const thin_space = '\xE2\x80\x89'
+const max_retry_attempts = 10
+const jpeg_quality = 90
 
 // Timeline represents a collection of posts to be displayed in the UI
 @[heap]
@@ -72,7 +74,7 @@ fn (mut app KiteApp) timeline_loop(mut w gui.Window) {
 
 	for {
 		bluesky_timeline := get_timeline(app.session) or {
-			if fallback_counter < 10 {
+			if fallback_counter < max_retry_attempts {
 				fallback_counter++
 				refresh_session(mut app) or { log_error(err.msg(), @FILE_LINE) }
 				time.sleep(time.second * fallback_counter * fallback_counter)
@@ -270,6 +272,9 @@ fn download_post_images(post BSkyPost) {
 	image_sources := extract_image_sources(post)
 	for source in image_sources {
 		image_tmp_file := image_tmp_file_path(source.cid)
+		if image_tmp_file.len == 0 {
+			continue
+		}
 		if !os.exists(image_tmp_file) {
 			if source.url.len > 0 {
 				// Download from URL (thumbnail)
@@ -354,7 +359,7 @@ fn save_image(name string, blob string) ! {
 	r_img := stbi.resize_uint8(m_img, image_width, int(image_width * ratio)) or { return err }
 	height := math.min(max_image_height, r_img.height)
 
-	stbi.stbi_write_jpg(name, r_img.width, height, r_img.nr_channels, r_img.data, 90) or {
+	stbi.stbi_write_jpg(name, r_img.width, height, r_img.nr_channels, r_img.data, jpeg_quality) or {
 		return err
 	}
 }
@@ -406,7 +411,21 @@ fn get_quote_post_link(post BSkyPost) (string, string, int, int) {
 	return '', '', 0, 0
 }
 
+fn is_safe_identifier(s string) bool {
+	for c in s {
+		is_valid := (c >= `a` && c <= `z`) || (c >= `A` && c <= `Z`)
+			|| (c >= `0` && c <= `9`) || c == `-` || c == `_` || c == `.` || c == `:`
+		if !is_valid {
+			return false
+		}
+	}
+	return s.len > 0
+}
+
 fn image_tmp_file_path(cid string) string {
+	if !is_safe_identifier(cid) {
+		return ''
+	}
 	return os.join_path_single(image_tmp_dir, '${cid}.jpg')
 }
 
@@ -430,7 +449,7 @@ fn prune_disk_image_cache(mut window gui.Window) {
 		diff := time.utc() - date
 		if diff > time.hour {
 			window.remove_image_from_cache_by_file_name(path)
-			os.rm(path) or {}
+			os.rm(path) or { log_error('failed to remove ${path}: ${err.msg()}', @FILE_LINE) }
 		}
 	}
 }

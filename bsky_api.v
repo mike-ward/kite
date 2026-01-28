@@ -9,6 +9,7 @@ import os
 
 const pds_host = 'https://bsky.social/xrpc'
 const session_file = '.kite.toml'
+const api_timeline_limit = 50
 
 struct BSkySession {
 pub:
@@ -188,7 +189,7 @@ pub:
 fn get_timeline(session BSkySession) !BSkyTimeline {
 	response := http.fetch(
 		method: .get
-		url:    '${pds_host}/app.bsky.feed.getTimeline?limit=50'
+		url:    '${pds_host}/app.bsky.feed.getTimeline?limit=${api_timeline_limit}'
 		header: http.new_header(
 			key:   .authorization
 			value: 'Bearer ${session.access_jwt}'
@@ -205,8 +206,25 @@ fn get_timeline(session BSkySession) !BSkyTimeline {
 	}
 }
 
+fn url_encode(s string) string {
+	mut result := []u8{cap: s.len * 3}
+	for c in s {
+		if (c >= `a` && c <= `z`) || (c >= `A` && c <= `Z`) || (c >= `0` && c <= `9`)
+			|| c == `-` || c == `_` || c == `.` || c == `~` {
+			result << c
+		} else {
+			result << `%`
+			result << '0123456789ABCDEF'[c >> 4]
+			result << '0123456789ABCDEF'[c & 0x0F]
+		}
+	}
+	return result.bytestr()
+}
+
 fn get_blob(did string, cid string) !string {
-	response := http.get('${pds_host}/com.atproto.sync.getBlob?did=${did}&cid=${cid}')!
+	encoded_did := url_encode(did)
+	encoded_cid := url_encode(cid)
+	response := http.get('${pds_host}/com.atproto.sync.getBlob?did=${encoded_did}&cid=${encoded_cid}')!
 	return match response.status() {
 		.ok { response.body }
 		else { error(response.status_msg) }

@@ -180,13 +180,20 @@ fn timeline_content(window &gui.Window) []gui.View {
 	return content
 }
 
+fn is_safe_uri(uri string) bool {
+	lower := uri.to_lower()
+	return lower.starts_with('http://') || lower.starts_with('https://')
+}
+
 fn text_link(link_title string, link_uri string, text_style gui.TextStyle) gui.View {
 	return gui.column(
 		padding:  gui.padding_none
 		sizing:   gui.fill_fit
 		on_click: fn [link_uri] (_ voidptr, mut e gui.Event, mut _ gui.Window) {
 			e.is_handled = true
-			os.open_uri(link_uri) or { log_error(err.msg(), @FILE_LINE) }
+			if is_safe_uri(link_uri) {
+				os.open_uri(link_uri) or { log_error(err.msg(), @FILE_LINE) }
+			}
 		}
 		on_hover: fn (mut layout gui.Layout, mut e gui.Event, mut w gui.Window) {
 			e.is_handled = true
