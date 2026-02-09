@@ -153,7 +153,7 @@ fn timeline_content(window &gui.Window) []gui.View {
 							radius:  0
 							content: [
 								gui.image(
-									file_name:  post.image_path
+									src:        post.image_path
 									max_height: max_image_height
 								),
 							]
@@ -197,9 +197,11 @@ fn text_link(link_title string, link_uri string, text_style gui.TextStyle) gui.V
 		}
 		on_hover: fn (mut layout gui.Layout, mut e gui.Event, mut w gui.Window) {
 			e.is_handled = true
-			layout.children[0].shape.text_style = &gui.TextStyle{
-				...layout.children[0].shape.text_style
-				color: gui.cornflower_blue
+			if layout.children.len > 0 && layout.children[0].shape.tc != unsafe { nil } {
+				layout.children[0].shape.tc.text_style = gui.TextStyle{
+					...layout.children[0].shape.tc.text_style
+					color: gui.cornflower_blue
+				}
 			}
 			w.set_mouse_cursor_pointing_hand()
 		}
