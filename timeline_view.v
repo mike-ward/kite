@@ -24,7 +24,7 @@ fn timeline_view(mut window gui.Window) gui.View {
 		padding:      gui.Padding{
 			top:    1
 			bottom: gui.pad_small
-			left:   gui.pad_x_small
+			left:   gui.pad_small
 			right:  gui.pad_medium + gui.pad_x_small
 		}
 		on_any_click: fn (_ voidptr, mut e gui.Event, mut w gui.Window) {
@@ -102,23 +102,23 @@ fn timeline_content(window &gui.Window) []gui.View {
 
 			if !post.formatted_quote_text.is_blank() {
 				post_content << gui.row(
-					padding: gui.Padding{
+					padding:     gui.Padding{
 						top:    gui.pad_medium
-						left:   gui.pad_x_small
+						left:   1
 						bottom: gui.pad_medium
 						right:  gui.pad_small
 					}
-					sizing:  gui.fill_fit
-					spacing: 0
-					content: [
+					sizing:      gui.fill_fit
+					size_border: 0
+					spacing:     0
+					content:     [
 						gui.rectangle( // vertical line
 							width:  line_thickness
 							sizing: gui.fixed_fill
 							color:  post_text_color
 						),
-						gui.rectangle(width: gui.pad_medium),
 						gui.column(
-							padding: gui.padding_none
+							padding: gui.padding(0, 0, 0, gui.pad_small + gui.pad_x_small)
 							sizing:  gui.fill_fit
 							spacing: 0
 							content: [
@@ -137,26 +137,17 @@ fn timeline_content(window &gui.Window) []gui.View {
 			}
 
 			if !post.link_uri.is_blank() {
-				post_content << gui.rectangle(height: gui.pad_x_small) // spacer
 				post_content << text_link(post.link_title, post.link_uri, post_link_style) // link_title is already sanitized in logic if needed, but here we just used it directly. Wait, previous code used sanitized_text(post.link_title). I should probably sanitize it in logic too.
 			}
 
 			if !post.image_path.is_blank() && app.show_images {
 				post_content << gui.column(
-					h_align: .center
-					padding: gui.padding_none
 					sizing:  gui.fill_fit
+					padding: gui.padding_none
 					content: [
-						gui.column(
-							color:   gui.theme().color_border
-							padding: gui.padding_one
-							radius:  0
-							content: [
-								gui.image(
-									src:        post.image_path
-									max_height: max_image_height
-								),
-							]
+						gui.image(
+							src:        post.image_path
+							max_height: max_image_height
 						),
 					]
 				)
@@ -187,15 +178,16 @@ fn is_safe_uri(uri string) bool {
 
 fn text_link(link_title string, link_uri string, text_style gui.TextStyle) gui.View {
 	return gui.column(
-		padding:  gui.padding_none
-		sizing:   gui.fill_fit
-		on_click: fn [link_uri] (_ voidptr, mut e gui.Event, mut _ gui.Window) {
+		padding:     gui.padding_none
+		size_border: 0
+		sizing:      gui.fill_fit
+		on_click:    fn [link_uri] (_ voidptr, mut e gui.Event, mut _ gui.Window) {
 			e.is_handled = true
 			if is_safe_uri(link_uri) {
 				os.open_uri(link_uri) or { log_error(err.msg(), @FILE_LINE) }
 			}
 		}
-		on_hover: fn (mut layout gui.Layout, mut e gui.Event, mut w gui.Window) {
+		on_hover:    fn (mut layout gui.Layout, mut e gui.Event, mut w gui.Window) {
 			e.is_handled = true
 			if layout.children.len > 0 && layout.children[0].shape.tc != unsafe { nil } {
 				layout.children[0].shape.tc.text_style = gui.TextStyle{
@@ -205,7 +197,7 @@ fn text_link(link_title string, link_uri string, text_style gui.TextStyle) gui.V
 			}
 			w.set_mouse_cursor_pointing_hand()
 		}
-		content:  [
+		content:     [
 			gui.text(
 				text:       link_title
 				mode:       .wrap
